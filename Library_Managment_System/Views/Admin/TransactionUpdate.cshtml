@@ -1,0 +1,144 @@
+﻿@{
+	ViewData["Title"] = "TransactionUpdate";
+	Layout = "~/Views/Shared/_AdminLayout.cshtml";
+}
+
+
+<html>
+<head>
+	<script src="@Url.Content("~/tostr/toastr.min.js")"></script>
+	<link href="@Url.Content("~/tostr/toastr.min.css")" rel="stylesheet" />
+</head>
+<body>
+	<div class="container-fluid pt-4 px-4">
+		<div class="col-12">
+			<div class="bg-light rounded h-100 p-4">
+				<div class="d-flex align-items-center justify-content-between mb-4">
+					<h6 class="mb-0">Book Return</h6>
+				</div>
+				<div class="col-md-12">
+					<div class="row">
+						<div class="col-md-10 m-auto mb-2">
+							<div class="card">
+								<div class="card-header bg-primary">
+									<h5>Book Detals</h5>
+								</div>
+								<div class="card-body">
+									<div class="col-md-12">
+										<div class="row">
+											<div class="col-md-6 mb-2">
+												<label>Book Name</label>
+												<input type="text" name="transaction_id" id="transaction_id" class="form-control" readonly />
+											</div>
+											<div class="col-md-6 mb-2">
+												<label>Name</label>
+												<input type="text" name="Name" id="Name" class="form-control" readonly />
+											</div>
+											<div class="col-md-6 mb-2">
+												<label for="Issue">Issue Date</label>
+												<b id="IssueDate"></b>
+											</div>
+											<div class="col-md-6 mb-2">
+												<label for="Due">Due Date</label>
+												<b id="DueDate"></b>
+											</div>
+
+											<div class="col-md-12">
+												<div class="alert alert-danger">
+													<b>Not returning a book by the due date may result in penalties at the MABRSIF Library.</b>
+												</div>
+											</div>
+										</div>
+
+									</div>
+								</div>
+							</div>
+						</div>
+						<form class="col-md-12">
+							<div class="row">
+								<div class="col-md-6 mb-2">
+									<b>Status</b><label class="text-danger" id="lblstatus"></label>
+									<select id="statuss" name="statuss" class="form-select">
+										<option value="">Select Values</option>
+										<option value="Returned">Returned</option>
+									</select>
+								</div>
+								<div class="col-md-6 mb-2">
+									<b>Return Date</b><label class="text-danger" id="lblreturn_date"></label>
+									<input type="date" Id="return_date" name="return_date" class="form-control" />
+								</div>
+								<div class="col-md-12 mb-3">
+									<button type="button" id="Return" class="btn btn-primary">Return</button>
+								</div>
+							</div>
+						</form>
+					</div>
+				</div>
+
+			</div>
+		</div>
+	</div>
+</body>
+</html>
+
+<script>
+		$.ajax({
+		url: "@Url.Content($"~/api/Transactions/TransactionsList/{ViewBag.BookId}")",
+		method: "get",
+		success: function (res) {
+			console.log("Full Response", res);
+
+			if (res.status === "Ok") {
+				var data = res.result;
+
+				$("#BookTitle").val(data.title);       // Make sure HTML input has id="BookTitle"
+				$("#Name").val(data.name);
+				$("#IssueDate").text(data.issue_date);
+				$("#DueDate").text(data.due_date);
+			} else {
+				console.log("not found");
+			}
+		},
+		error: function (err) {
+			console.log("AJAX Error", err);
+		}
+	});
+	$(document).ready(function(){
+		$("#Return").click(function(){
+			var Cnt = 0 ;
+			Cnt = IsEmpty("statuss","lblstatus",Cnt),
+			Cnt = IsEmpty("return_date","lblreturn_date",Cnt)
+
+			if(Cnt == 0)
+			{
+				 var requestdata ={
+				   transaction_id:@ViewBag.BookId,
+				   statuss:$("#statuss").val(),
+				   return_date:$("#return_date").val()
+			     }
+			     $("#Return").prop("disabled","true");
+			     $("#Return").html(`<i class="fa fa-spinner"></i>&nbsp;Palis Wate`);
+				  console.log("data",requestdata);
+				 $.ajax({
+					 url:"@Url.Content("~/api/Transactions/UpdateTransactions")",
+					 method:"Post",
+					 contentType:"application/json",
+					 data:JSON.stringify(requestdata),
+					 success:function(res){
+						 // console.log(res.result);
+						 SuccessAlert(res.result);
+						 $("#Return").removeAttr("disabled");
+						 $("#Return").html(`<i class="fa fa-save"></i>&nbsp;Return`);
+					 },
+					 error:function(err){
+						 DangerAlert(err.messae);
+						 $("#Return").removeAttr("disabled");
+						 $("#Return").html(`<i class="fa fa-save"></i>&nbsp;Return`);
+					 }
+				 })
+			}
+		})
+	})
+</script>
+
+

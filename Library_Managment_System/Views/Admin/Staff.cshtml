@@ -1,0 +1,186 @@
+﻿@{
+	ViewData["Title"] = "Staff";
+	Layout = "~/Views/Shared/_AdminLayout.cshtml";
+}
+
+<html>
+<head>
+	<script src="@Url.Content("~/tostr/toastr.min.js")"></script>
+	<link href="@Url.Content("~/tostr/toastr.min.css")" rel="stylesheet" />
+</head>
+<body>
+	<div class="container-fluid pt-4 px-4">
+		<div class="col-12">
+			<div class="bg-light rounded h-100 p-4">
+				<div class="d-flex align-items-center justify-content-between mb-4">
+					<h6 class="mb-0">Library Staff</h6>
+					<button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#myModal">
+						<i class="fa fa-plus"></i> Staff
+					</button>
+				</div>
+				<div class="table-responsive">
+					<table class="table align-content-center" id="dataTable">
+						<thead>
+							<tr>
+								<th scope="col">Role</th>
+								<th scope="col">Name</th>
+								<th scope="col">Email</th>
+							</tr>
+						</thead>
+						<tbody></tbody>
+					</table>
+				</div>
+			</div>
+		</div>
+	</div>
+	<div class="modal" id="myModal">
+		<div class="modal-dialog modal-dialog-centered" style="max-width: 70.333333%;">
+			<div class="modal-content">
+				<div class="modal-header">
+					<h4 class="modal-title">New Staff</h4>
+					<button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+				</div>
+				<div class="modal-body">
+					<div class="col-md-12">
+						<form class="row">
+							<input type="hidden" id="staff_id" value="0" name="staff_id" />
+							<div class="col-md-4 mb-2">
+								<label>Name&nbsp;<label class="text-danger" id="lblname"></label></label>
+								<input type="text" Id="name" name="name" class="form-control" />
+							</div>
+							<div class="col-md-4 mb-2">
+								<label>Email&nbsp;<label class="text-danger" id="lblemail"></label></label>
+								<input type="email" Id="email" name="email" class="form-control" />
+							</div>
+							<div class="col-md-4 mb-2">
+								<label>Role&nbsp;<label class="text-danger" id="lblrole"></label></label>
+								<select id="role" name="role" class="form-select">
+									<option value="">Select Role</option>
+									<option value="Librarian">Librarian</option>
+									<option value="Assistant">Assistant</option>
+								</select>
+							</div>
+							<div class="col-md-6 mt-3">
+								<button type="button" id="Save" class="btn btn-primary text-white btn-lg"><i class="fa fa-save"></i>&nbsp;Save</button>&nbsp;
+								<button type="button" onclick="Clearform()" class="btn btn-danger text-white btn-lg">Clear</button>
+							</div>
+						</form>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+</body>
+</html>
+<script>
+	function Clearform(){
+		$("#staff_id").val("0");
+		$("#name").val("");
+		$("#email").val("");
+		$("#role").val("");
+		$("#Save").html(`<i class="fa fa-save"></i>&nbsp;Save`);
+	}
+	$(document).ready(function(){
+		$("#Save").click(function(){
+			var Cnt = 0;
+			Cnt =  IsEmpty("name","lblname",Cnt);
+			Cnt =  IsEmpty("email","lblemail",Cnt);
+			Cnt =  IsEmpty("role","lblrole",Cnt);
+			if(Cnt == "0")
+			{
+				var requestdata ={
+					"staff_id":$("#staff_id").val(),
+					"name":$("#name").val(),
+					"email":$("#email").val(),
+					"role":$("#role").val()
+				}
+				$("#Save").prop("disabled","true");
+				$("#Save").html(`<i class="fa fa-spinner"></i>&nbsp;Plise Wate`);
+				// console.log(requestdata);
+
+				var path = "@Url.Content("~/api/Staff/AddStaff")";
+				if($("#staff_id").val() != "0")
+				{
+					path = "@Url.Content("~/api/Staff/UpdateStaff")";
+				}
+				$.ajax({
+					url:path,
+					contentType:"application/json",
+					method:"Post",
+					data:JSON.stringify(requestdata),
+					success:function(response){
+					  if(response.status == "Ok")
+					  {
+						// console.log(response.result);
+						$("#Save").removeAttr("disabled");
+					    $("#Save").html(`<i class="fa fa-save"></i>&nbsp;Save`);
+						dt.ajax.reload(null,false);
+						$('#myModal').modal('hide');
+						SuccessAlert(response.result);
+					  }
+					  else{
+						// console.log("Error",response.result);
+						$("#Save").removeAttr("disabled");
+						$("#Save").html(`<i class="fa fa-save"></i>&nbsp;Save`);
+						DangerAlert(response.result);
+					  }
+					},
+		            error:function(error){
+					   console.log(error.result);
+					}			
+				})
+			}
+		})
+	})
+
+	function Detals(Id){
+		$.ajax({
+			url:"@Url.Content("~/api/Staff/StaffDetals/")" + Id,
+			method:"get",
+			success:function(response){
+				if(response.status == "Ok")
+				{
+					var data = response.result;
+					$("#staff_id").val(data.staff_id),
+					$("#name").val(data.name),
+					$("#email").val(data.email),
+					$("#role").val(data.role)
+					// console.log("Afjal",data);
+					$("#Save").html("Update");
+				}
+				else{
+					DangerAlert(response.result);
+				}
+			},
+			error:function(error){
+			 console.log(error.result);
+			}
+		})
+	}
+	var dt = $("#dataTable").DataTable({
+		ajax:{
+			url:"@Url.Content("~/api/Staff/Stafflist")",
+			method:"get",
+			dataSrc:'result'
+		},
+		columns:[
+			{data:"role"},
+			{data:"name"},
+			{data:"email"},
+			{data:"staff_id"}
+		],
+		columnDefs:[
+			{
+				'targets':3,
+				'orderable':false,
+				'searchbale':false,
+				'className':'text-center',
+				'render':function(data,type,full,meta){
+					var Edit = `Detals(${data})`;
+					return '<i class="fa fa-edit" data-bs-toggle="modal" data-bs-target="#myModal" style="color:blue;" onclick="'+ Edit +'"></i>';
+				}
+			}
+		]
+	})
+</script>
+

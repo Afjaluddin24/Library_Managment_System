@@ -1,0 +1,227 @@
+﻿@{
+	ViewData["Title"] = "Books";
+	Layout = "~/Views/Shared/_AdminLayout.cshtml";
+}
+
+<html>
+<head>
+	<script src="@Url.Content("~/tostr/toastr.min.js")"></script>
+	<link href="@Url.Content("~/tostr/toastr.min.css")" rel="stylesheet" />
+</head>
+<body>
+	<div class="container-fluid pt-4 px-4">
+		<div class="bg-light text-center rounded p-4">
+			<div class="d-flex align-items-center justify-content-between mb-4">
+				<h6 class="mb-0">Books Detals</h6>
+				<button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#myModal">
+					<i class="fa fa-plus"></i> Books
+				</button>
+			</div>
+			<div class="table-responsive">
+				<table class="table text-start align-middle table-bordered table-hover mb-0" id="dataTable">
+					<thead>
+						<tr class="text-dark">
+							<th scope="col">IsbnNo</th>
+							<th scope="col">Name</th>
+							<th scope="col">Category</th>
+							<th scope="col">Author</th>
+							<th scope="col">Publisher</th>
+							<th scope="col">Copies</th>
+						</tr>
+					</thead>
+					<tbody></tbody>
+				</table>
+			</div>
+		</div>
+	</div>
+	<div class="modal" id="myModal">
+		<div class="modal-dialog modal-dialog-centered" style="max-width: 70.333333%;">
+			<div class="modal-content">
+				<div class="modal-header">
+					<h4 class="modal-title">New Books</h4>
+					<button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+				</div>
+				<div class="modal-body">
+					<div class="col-md-12">
+						<form class="row">
+							<input type="hidden" id="book_id" name="book_id"  />
+							<div class="col-md-6 mb-2">
+								<label>Category&nbsp;<label class="text-danger" id="lblcategory_id"></label></label>
+								<select id="category_id" class="form-select">
+									<option value="value">Select Category</option>
+								</select>
+							</div>
+							<div class="col-md-6 mb-2">
+								<label>Book Name&nbsp;<label class="text-danger" id="lbltitle"></label></label>
+								<input type="text" Id="title" name="title" class="form-control" />
+							</div>
+							<div class="col-md-6 mb-2">
+								<label>Author&nbsp;<label class="text-danger" id="lblauthor"></label></label>
+								<input type="text" Id="author" name="author" class="form-control" />
+							</div>
+							<div class="col-md-6 mb-2">
+								<label>Publisher&nbsp;<label class="text-danger" id="lblpublisher"></label></label>
+								<input type="text" Id="publisher" name="publisher" class="form-control" />
+							</div>
+							<div class="col-md-6 mb-2">
+								<label>Isbn&nbsp;<label class="text-danger" id="lblisbn"></label></label>
+								<input type="text" Id="isbn" name="isbn" class="form-control" />
+							</div>
+							<div class="col-md-6 mb-2">
+								<label>Available Copies&nbsp;<label class="text-danger" id="lblavailable_copies"></label></label>
+								<input type="number" minlength="1" Id="available_copies" name="available_copies" class="form-control" />
+							</div>
+							<div class="col-md-6 mt-3">
+								<button type="button" id="Save" class="btn btn-primary text-white btn-lg"><i class="fa fa-save"></i>&nbsp;Save</button>&nbsp;
+								<button type="button" onclick="ClearForm()" class="btn btn-danger text-white btn-lg">Clear</button>
+							</div>
+						</form>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+</body>
+</html>
+<script>
+	function ClearForm(){
+		$("#book_id").val("0");
+		$("#title").val("");
+		$("#category_id").val("");
+		$("#author").val("");
+		$("#publisher").val("");
+		$("#isbn").val("");
+		$("#available_copies").val("");
+		$("#Save").html(`<i class="fa fa-save"></i>&nbsp;Save`);
+	}
+	$(document).ready(function(){
+		$("#Save").click(function(){
+            var Cnt = 0;
+			Cnt = IsEmpty("title","lbltitle",Cnt);
+			Cnt = IsEmpty("category_id","lblcategory_id",Cnt);
+			Cnt = IsEmpty("author","lblauthor",Cnt);
+			Cnt = IsEmpty("publisher","lblpublisher",Cnt);
+			Cnt = IsEmpty("isbn","lblisbn",Cnt);
+			Cnt = IsEmpty("available_copies","lblavailable_copies",Cnt);
+
+			if(Cnt == "0"){
+			   var requestData={
+				   "book_id":$("#book_id").val(),
+				   "title":$("#title").val(),
+				   "author":$("#author").val(),
+				   "publisher":$("#publisher").val(),
+				   "isbn":$("#isbn").val(),
+				   "category_id":$("#category_id").val(),
+				   "available_copies":$("#available_copies").val()
+			   }
+			   $("#Save").prop("disabled","true");
+			   $("#Save").html(`<i class="fa fa-spinner"></i>&nbsp;Plise Wate`);
+			   // console.log("Data",requestData);
+
+			   var path = "@Url.Content("~/api/Books/AddBook")";
+			   if($("#book_id").val() != "0")
+			   {
+				   path = "@Url.Content("~/api/Books/UpdateBook")";
+			   }
+			   $.ajax({
+				   url:path,
+				   contentType:"application/json",
+				   method:"post",
+				   data:JSON.stringify(requestData),
+				   success:function(response){
+				     // console.log(response);
+					 if(response.status == "Ok"){
+						  $("#Save").removeAttr("disabled");
+				       	  $("#Save").html(`<i class="fa fa-save"></i>&nbsp;Save`);
+						  SuccessAlert(response.result);
+						  dt.ajax.reload(null, false);
+						  $('#myModal').modal('hide');
+						  ClearForm();
+					 }
+					 else{
+						 $("#Save").removeAttr("disabled");
+						 $("#Save").html(`<i class="fa fa-save"></i>&nbsp;Save`);
+						 DangerAlert(response.result);
+					 }
+				   },
+				   error:function(error){
+				    console.log(error);
+					$("#Save").removeAttr("disabled");
+					$("#Save").html(`<i class="fa fa-save"></i>&nbsp;Save`);
+					DangerAlert(error.result);
+				   }
+			   })
+		    }
+		})
+	})
+	$.ajax({
+		url:"@Url.Content("~/api/Categories/CategoryList")",
+		method:"Get",
+		success:function(response){
+		   // console.log(response);
+		   var data = response.result;
+		   data.map(o=>{
+			   $("#category_id").append(`<option value="${o.category_id}">${o.category_name}</option>`)
+		   })
+		}
+	})
+
+	function Details(Id){
+		$.ajax({
+			url:"@Url.Content("~/api/Books/Book/")" + Id,
+			method:"get",
+			success:function(response){
+				console.log(response.result);
+				if(response.status == "Ok")
+				{
+					var data = response.result;
+					$("#book_id").val(data.book_id);
+					$("#title").val(data.title);
+					$("#author").val(data.author);
+					$("#category_id").val(data.category_id);
+					$("#isbn").val(data.isbn);
+					$("#available_copies").val(data.available_copies);
+					$("#publisher").val(data.publisher);
+					$("#Save").html(`Update`);
+				}
+				else{
+					DangerAlert(response.result);
+				}
+			},
+			error:function(error){
+				console.log(error);
+				DangerAlert(error.result);
+			}
+		})
+	}
+
+	var dt = $("#dataTable").DataTable({
+		ajax:{
+			url:"@Url.Content("~/api/Books/BooksCategories")",
+			method:"get",
+			dataSrc:'result'
+		},
+		columns:[
+			{data:"isbn"},
+			{data:"title"},
+			{data:"category_name"},
+			{data:"author"},
+			{data:"publisher"},
+			{data:"available_copies"},
+			{data:"book_id"}
+		],
+		columnDefs:[
+			{
+				'targets':6,
+				'searchable':false,
+				'orderable':false,
+				'className':'text-center',
+				'render':function(data,style,full,meta){
+					var Edit=`Details(${data})`;
+					return '<i class="fa fa-edit" data-bs-toggle="modal" data-bs-target="#myModal" style="color:blue;" onclick="'+ Edit +'"></i>';
+				}
+			}
+		]
+	})
+</script>
+

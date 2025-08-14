@@ -1,0 +1,178 @@
+﻿@{
+	ViewData["Title"] = "Categories";
+	Layout = "~/Views/Shared/_AdminLayout.cshtml";
+}
+
+<html>
+<head>
+	<script src="@Url.Content("~/tostr/toastr.min.js")"></script>
+	<link href="@Url.Content("~/tostr/toastr.min.css")" rel="stylesheet" />
+</head>
+<body>
+	<div class="col-md-12 col-sm-12">
+		<div class="cbg-light rounded h-100 p-4">
+			<h6 class="mb-4">Categories</h6>
+			<div class="card-body">
+				<form>
+					<div class="mb-3">
+						<input type="hidden" id="category_id" name="category_id" value="0" />
+						<label class="form-label">Categories &nbsp;<label id="lblCategories" class="text-danger"></label></label>
+						<input type="text" class="form-control" id="Categories" aria-describedby="Categories">
+
+					</div>
+					<button type="button" id="Save" class="btn btn-primary"><i class="fa fa-save"></i>&nbsp;Save</button>&nbsp;&nbsp;
+					<button type="button" class="btn btn-danger" onclick="clearForm()">Clear</button>
+				</form>
+				<table id="dataTable" class="table table-bordered mt-3 text-center">
+					<thead>
+						<tr>
+							<th>#</th>
+							<th>Name</th>
+						</tr>
+					</thead>
+					<tbody></tbody>
+				</table>
+			</div>
+		</div>
+	</div>
+
+</body>
+</html>
+
+
+
+<script>
+	function clearForm(){
+		$("#category_id").val("0");
+		$("#Categories").val("");
+		$("#Save").html(`<i class="fa fa-save"></i>&nbsp;Save`);
+	}
+	$(document).ready(function(){
+		$("#Save").click(function(){
+		   var Cnt = 0;
+		   Cnt = IsEmpty("Categories","lblCategories",Cnt);
+
+		   if(Cnt == 0)
+		   {
+			   var requestData ={
+				   "category_id":$("#category_id").val(),
+				   "category_name":$("#Categories").val()
+			   }
+			   $("#Save").prop("disabled","true");
+			   $("#Save").html(`<i class="fa fa-spinner"></i>&nbsp;Plise Wate`);
+
+			   var path = "@Url.Content("~/api/Categories/AddCategory")";
+			   if($("#category_id").val() != "0")
+			   {
+				   path = "@Url.Content("~/api/Categories/UpdateCategory")";
+			   }
+			   $.ajax({
+				   url:path,
+				   contentType:"application/json",
+				   method:"Post",
+				   data:JSON.stringify(requestData),
+				   success:function(Success){
+					if(Success.status == "Ok")
+					{
+					 console.log(Success);
+					 $("#Save").removeAttr("disabled");
+					 $("#Save").html(`<i class="fa fa-save"></i>&nbsp;Save`);
+					 dt.ajax.reload(null, false);
+					 SuccessAlert(Success.result);
+					}
+					else{
+					 console.log("Afjal",Success.result);
+					 $("#Save").removeAttr("disabled");
+					 $("#Save").html(`<i class="fa fa-save"></i>&nbsp;Save`);
+					 DangerAlert(Success.result);
+					}
+				   },
+				   error:function(Error){
+					 console.log("Error Message",Error)
+					 $("#Save").removeAttr("disabled");
+					 $("#Save").html(`<i class="fa fa-save"></i>&nbsp;Save`);
+					 DangerAlert(Error.result);
+				   }
+			   })
+		   }
+		})
+	}) 
+
+	function GetDetals(Id){
+		$.ajax({
+			url:"@Url.Content("~/api/Categories/Category/")" + Id,
+			method:"GET",
+			success:function(response){
+			   if(response.status == "Ok")
+			   {
+				   var data = response.result;
+				   $("#category_id").val(data.category_id);
+				   $("#Categories").val(data.category_name);
+				   $("#Save").html(`Update`);
+			   }
+			   else{
+				   DangerAlert(response.result);
+			   }
+			}
+		})
+	}
+
+	function Delete(Id){
+		if(confirm("are you went to delete......!"))
+		{
+			$.ajax({
+			url:"@Url.Content("~/api/Categories/CategoryRemove/")" + Id,
+			method:"Delete",
+			success:function(response){
+			   if(response.status == "Ok")
+			   {
+				   console.log("Status")
+				   SuccessAlert(response.result);
+				   dt.ajax.reload(null, false);
+			   }
+			   else{
+					(response.result);
+			   }
+			}
+		})
+		}
+	}
+
+	var dt = $("#dataTable").DataTable({
+			ajax:{
+				url: "@Url.Content("~/api/Categories/CategoryList")",
+				method: "GET",
+				dataSrc: 'result'
+			},
+			columns:[
+				{data:"category_id"},
+				{data:"category_name"},
+				{data:"category_id"},
+				{data:"category_id"}
+			],
+			columnDefs:[
+				{
+					'targets':2,
+					'searchable':false,
+					'orderable':false,
+					'className':'text-center',
+					'render':function(data,type,full,meta)
+					{
+						var Edit = `GetDetals(${data})`;
+						return '<i class="fa fa-edit"  onclick="' + Edit + '"></i>';
+					}
+				},
+				{
+					'targets':3,
+					'searchable':false,
+					'orderable':false,
+					'className':"text-center",
+					'render':function(data,type,full,meta){
+						var Delete = `Delete(${data})`;
+						return '<i class="fa fa-trash" style="color:red;" onclick="' + Delete + '"></i>'
+					}
+				}
+			]
+		})
+</script>
+

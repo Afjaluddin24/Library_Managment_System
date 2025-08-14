@@ -1,0 +1,257 @@
+﻿@{
+	ViewData["Title"] = "Transaction";
+	Layout = "~/Views/Shared/_AdminLayout.cshtml";
+}
+
+<html>
+<head>
+	<script src="@Url.Content("~/tostr/toastr.min.js")"></script>
+	<link href="@Url.Content("~/tostr/toastr.min.css")" rel="stylesheet" />
+</head>
+<body>
+	<div class="container-fluid pt-4 px-4">
+		<div class="col-12">
+			<div class="bg-light rounded h-100 p-4">
+				<div class="d-flex align-items-center justify-content-between mb-4">
+					<h6 class="mb-0">Book Transactions</h6>
+					<button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#myModal">
+						<i class="fa fa-plus"></i> Transactions
+					</button>
+				</div>
+				<div class="table-responsive">
+					<table class="table" id="dataTable">
+						<thead>
+							<tr>
+								<th scope="col">Name</th>
+								<th scope="col">Book Name</th>
+								<th scope="col">Date</th>
+								<th scope="col">Due Date</th>
+								<th scope="col">Status</th>
+								<th scope="col">Return Date</th>
+							</tr>
+						</thead>
+						<tbody></tbody>
+					</table>
+				</div>
+			</div>
+		</div>
+	</div>
+	<div class="modal" id="myModal">
+		<div class="modal-dialog modal-dialog-centered" style="max-width: 70.333333%;">
+			<div class="modal-content">
+				<div class="modal-header">
+					<h4 class="modal-title">Book Transactions</h4>
+					<button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+				</div>
+				<div class="modal-body">
+					<div class="col-md-12">
+						<form class="row">
+							<div class="col-md-4 mb-2">
+								<label>Name&nbsp;<label class="text-danger" id="lblmember_id"></label></label>
+								<select id="member_id" name="member_id" class="form-select">
+									<option value="">Select Name</option>
+								</select>
+							</div>
+							<div class="col-md-4 mb-2">
+								<label>Book Name&nbsp;<label class="text-danger" id="lblbook_id"></label></label>
+								<select id="book_id" name="book_id" class="form-select">
+									<option value="">Select Book Name</option>
+								</select>
+							</div>
+							<div class="col-md-4 mb-2">
+								<label for="issue_date">Issue date <span class="text-danger" id="lblissue_date"></span></label>
+								<input type="date" id="issue_date" name="issue_date" class="form-control" />
+							</div>
+							<div class="col-md-4 mb-2">
+								<label>Due Date&nbsp;<label class="text-danger" id="lbldue_date"></label></label>
+								<input type="date" Id="due_date" name="due_date" class="form-control" />
+							</div>
+							<div class="col-md-4 mb-2">
+								<label>Status&nbsp;<label class="text-danger" id="lblstatus"></label></label>
+								<select id="status" name="status" class="form-select">
+									<option value="">Select Now</option>
+									<option value="Issued">Issued</option>
+									<option value="Returned">Returned</option>
+								</select>
+							</div>
+							<div class="col-md-6 mt-3">
+								<button type="button" id="Save" class="btn btn-primary text-white btn-lg"><i class="fa fa-save"></i>&nbsp;Save</button>&nbsp;
+								<button type="button" onclick="Clearform()" class="btn btn-danger text-white btn-lg">Clear</button>
+							</div>
+						</form>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+</body>
+</html>
+<script>
+	$.ajax({
+		url:"@Url.Content("~/api/Member/MemberList")",
+		method:"get",
+		success:function(response){
+			var data = response.result;
+			data.map(o=>{
+				$("#member_id").append(`<option value="${o.member_id}">${o.name}</option>`);
+			})
+		},
+		error:function(error){
+		  console.log(error.message);
+		}
+	})
+	$.ajax({
+		url:"@Url.Content("~/api/Books/BookList")",
+		method:"get",
+		success:function(response){
+			var data = response.result;
+			data.map(o=>{
+				$("#book_id").append(`<option value="${o.book_id}">${o.title}</option>`);
+			})
+		},
+		error:function(error){
+		  console.log(error.message);
+		}
+	})
+
+	$(document).ready(function(){
+		$("#Save").click(function(){
+		  var Cnt = 0;
+		  Cnt = IsEmpty("member_id","lblmember_id",Cnt),
+		  Cnt = IsEmpty("book_id","lblbook_id",Cnt),
+		  Cnt = IsEmpty("due_date","lbldue_date",Cnt),
+		  Cnt = IsEmpty("status","lblstatus",Cnt)
+
+		  if(Cnt == "0")
+		{
+			var requestdata = {
+				member_id:$("#member_id").val(),
+				book_id:$("#book_id").val(),
+				issue_date:$("#issue_date").val(),
+				due_date:$("#due_date").val(),
+				status:$("#status").val(),
+			}
+			$("#Save").prop("disabled","true");
+			$("#Save").html(`<i class="fa fa-spinner"></i>&nbsp;Plise Wate`);
+			console.log(requestdata);
+			$.ajax({
+				url:"@Url.Content("~/api/Transactions/AddTransactions")",
+				contentType:"application/json",
+				method:"post",
+				data:JSON.stringify(requestdata),
+				success:function(reponse){
+					  $("#Save").removeAttr("disabled");
+					  $("#Save").html(`<i class="fa fa-save"></i>&nbsp;Save`);
+					  dt.ajax.reload(null, false);
+					  $('#myModal').modal('hide');
+					  SuccessAlert(reponse.result);
+					
+				},
+				error:function(error){
+				   $("#Save").removeAttr("disabled");
+				   $("#Save").html(`<i class="fa fa-save"></i>&nbsp;Save`);
+				   DangerAlert(error);
+				}
+			})
+		}
+		})
+	})
+
+	function Detals(Id){
+		$.ajax({
+			url:"@Url.Content("/api/Transactions/Transactions/")" + Id,
+			method:"get",
+			success:function(response){
+				console.log(response);
+				if(response.status == "Ok")
+				{
+					var data = response.result;
+					$("#transaction_id").val(data.transaction_id);
+					$("#statuss").val(data.status);
+					$("#Update").html("Update");
+				}
+				else{
+					DangerAlert(response.result);
+				}
+			},
+			error:function(error){
+				console.log(error);
+			}
+		})
+	}
+
+	var dt = $("#dataTable").DataTable({
+		ajax:{
+			url:"@Url.Content("~/api/Transactions/TransactionsList")",
+			method:"get",
+			dataSrc:'result'
+		},
+		columns:[
+			 {data: null,
+				render: function(data, type, full,meta) {
+				  return `
+					<b>${data.name}</b><br/>
+					<span><i class="fa fa-envelope text-danger"></i> ${data.email}</span><br/>
+					<span><i class="fa fa-phone"></i>
+					<a style="color:black;" href="https://wa.me/91${data.phone}?text=The%20book%20has%20not%20been%20submitted%20yet.%20Please%20submit%20it%20by%20the%20due%20date.%20The%20submission%20charge%20is%20%E2%82%B940%20."
+					   target="_blank">
+					   +91 ${data.phone}
+					</a></span>`;
+				}
+			},
+			{data:"title"},
+			{data: "issue_date",
+			  render: function(data) {
+			   if (!data) return "";
+			   const d = new Date(data);
+			   return ('0' + d.getDate()).slice(-2) + '/' +
+			   ('0' + (d.getMonth() + 1)).slice(-2) + '/' +
+			   d.getFullYear();
+			  }
+			},
+			{data:"due_date",
+			   render: function(data) {
+			   if (!data) return "";
+			   const d = new Date(data);
+			   return ('0' + d.getDate()).slice(-2) + '/' +
+			   ('0' + (d.getMonth() + 1)).slice(-2) + '/' +
+			   d.getFullYear();
+			  }},
+			{data:"status"},
+			{data:"return_date",
+			   render: function(data) {
+			   if (!data) return "";
+			   const d = new Date(data);
+			   return ('0' + d.getDate()).slice(-2) + '/' +
+			   ('0' + (d.getMonth() + 1)).slice(-2) + '/' +
+			   d.getFullYear();
+			  }},
+			  {data:"transaction_id"}
+		],
+		columnDefs:[
+			{
+				'targets':6,
+				'orderbale':false,
+				'searchable':false,
+				'className':"text-center",
+				'render':function(data,type,full,meta){
+					return '<a href="Modify/'+data+'"><i class="fa fa-edit"  title="Edit Transaction"></i></a>';
+				}
+			}
+		]
+	})
+</script>
+<script>
+	const today = new Date().toISOString().split('T')[0];
+	document.getElementById('issue_date').value = today;
+	document.getElementById('issue_date').min = today;
+	document.getElementById('issue_date').max = today;
+
+	  document.addEventListener('DOMContentLoaded', () => {
+	  const today = new Date().toISOString().split('T')[0];
+	  const returnDate = document.getElementById('return_date');
+	  returnDate.value = today;
+	  returnDate.min = today;
+	  returnDate.max = today;
+	});
+</script>
