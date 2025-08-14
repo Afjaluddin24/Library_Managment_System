@@ -1,47 +1,69 @@
-﻿
-@{
-    ViewData["Title"] = "Index";
-    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+﻿@{
+	ViewData["Title"] = "Index";
+	Layout = "~/Views/Shared/_AdminLayout.cshtml";
 }
 
 <div class="container-fluid pt-4 px-4">
-    <div class="row g-4">
-        <div class="col-sm-6 col-xl-3">
-            <div class="bg-light rounded d-flex align-items-center justify-content-between p-4">
-                <i class="fa fa-chart-line fa-3x text-primary"></i>
-                <div class="ms-3">
-                    <p class="mb-2">Today Sale</p>
-                    <h6 class="mb-0">$1234</h6>
-                </div>
-            </div>
-        </div>
-        <div class="col-sm-6 col-xl-3">
-            <div class="bg-light rounded d-flex align-items-center justify-content-between p-4">
-                <i class="fa fa-chart-bar fa-3x text-primary"></i>
-                <div class="ms-3">
-                    <p class="mb-2">Total Sale</p>
-                    <h6 class="mb-0">$1234</h6>
-                </div>
-            </div>
-        </div>
-        <div class="col-sm-6 col-xl-3">
-            <div class="bg-light rounded d-flex align-items-center justify-content-between p-4">
-                <i class="fa fa-chart-area fa-3x text-primary"></i>
-                <div class="ms-3">
-                    <p class="mb-2">Today Revenue</p>
-                    <h6 class="mb-0">$1234</h6>
-                </div>
-            </div>
-        </div>
-        <div class="col-sm-6 col-xl-3">
-            <div class="bg-light rounded d-flex align-items-center justify-content-between p-4">
-                <i class="fa fa-chart-pie fa-3x text-primary"></i>
-                <div class="ms-3">
-                    <p class="mb-2">Total Revenue</p>
-                    <h6 class="mb-0">$1234</h6>
-                </div>
-            </div>
-        </div>
-    </div>
+	<div class="row g-4">
+		<div class="col-sm-6 col-xl-3">
+			<div class="bg-light rounded d-flex align-items-center justify-content-between p-4">
+				<i class="fa fa-chart-line fa-3x text-primary"></i>
+				<div class="ms-3">
+					<p class="mb-2">Categories</p>
+					<h6 class="mb-0" id="categories"></h6>
+				</div>
+			</div>
+		</div>
+		<div class="col-sm-6 col-xl-3">
+			<div class="bg-light rounded d-flex align-items-center justify-content-between p-4">
+				<i class="fa fa-chart-bar fa-3x text-primary"></i>
+				<div class="ms-3">
+					<p class="mb-2">Books</p>
+					<h6 class="mb-0" id="books"></h6>
+				</div>
+			</div>
+		</div>
+		<div class="col-sm-6 col-xl-3">
+			<div class="bg-light rounded d-flex align-items-center justify-content-between p-4">
+				<i class="fa fa-chart-area fa-3x text-primary"></i>
+				<div class="ms-3">
+					<p class="mb-2">Members</p>
+					<h6 class="mb-0" id="members"></h6>
+				</div>
+			</div>
+		</div>
+		<div class="col-sm-6 col-xl-3">
+			<div class="bg-light rounded d-flex align-items-center justify-content-between p-4">
+				<i class="fa fa-chart-pie fa-3x text-primary"></i>
+				<div class="ms-3">
+					<p class="mb-2">Book Transactions</p>
+					<h6 class="mb-0" id="transactions"></h6>
+				</div>
+			</div>
+		</div>
+	</div>
 </div>
 
+<script>
+	$.ajax({
+	   url:"@Url.Content("~/api/Home/HomeDetals")",
+	   method:"get",
+	   success:function(res){
+		   if(res.status == "Ok")
+		   {
+			   var data = res.result;
+			   $("#Categories").val(data.categories);
+			   $("#books").val(data.books);
+			   $("#members").val(data.members);
+			   $("#transactions").val(data.transactions);
+			   console.log(data);
+		   }
+		   else{
+			   console.log("Not Found");
+		   }
+	   },
+	   error:function(err){
+		   console.log(err);
+	   }
+	})
+</script>
